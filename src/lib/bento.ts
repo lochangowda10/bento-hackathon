@@ -31,9 +31,9 @@ export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
     if (response.ok) {
       const data = await response.json();
       if (data && Array.isArray(data.markets)) {
-         return data.markets.map((m: any) => ({
-           id: m.id || m.duelId,
-           title: m.title || m.question,
+         return data.markets.map((m: { id?: string; duelId?: string; title?: string; question?: string; options?: { index: number; label: string }[]; volume?: string; status?: 'LIVE' | 'CLOSED' }) => ({
+           id: m.id || m.duelId || '',
+           title: m.title || m.question || '',
            options: m.options || [{index: 0, label: 'YES'}, {index: 1, label: 'NO'}],
            volume: m.volume || '0',
            status: m.status || 'LIVE'
@@ -85,11 +85,12 @@ export async function placeBentoPrediction(duelId: string, optionIndex: number, 
       betAmountUsdc: stake,
       slippageBps: 100, // 1%
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("SDK Estimate Error:", e);
+    const errMsg = e instanceof Error ? e.message : String(e);
     return { 
       success: false, 
-      message: `Bento Engine Estimate Error: ${e.message || "Unauthorized (Invalid User JWT)"}` 
+      message: `Bento Engine Estimate Error: ${errMsg || "Unauthorized (Invalid User JWT)"}` 
     };
   }
 
@@ -117,11 +118,12 @@ export async function placeBentoPrediction(duelId: string, optionIndex: number, 
       { idempotencyKey }
     );
     return { success: true, message: "Prediction executed successfully." };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("SDK Place Error:", e);
+    const errMsg = e instanceof Error ? e.message : String(e);
     return { 
       success: false, 
-      message: `Bento Engine Placement Error: ${e.message || "Failed to place prediction on-chain"}` 
+      message: `Bento Engine Placement Error: ${errMsg || "Failed to place prediction on-chain"}` 
     };
   }
 }

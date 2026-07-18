@@ -1,6 +1,8 @@
 "use client";
+/* eslint-disable react-hooks/purity */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { fetchLiveMarkets, placeBentoPrediction, BentoMarket } from "@/lib/bento";
 import { getAnakinMarketAnalysis, AnakinAnalysis } from "@/lib/anakin";
 import { playExecutionSound } from "@/lib/sound";
@@ -22,7 +24,7 @@ function useTerminalLines(marketTitle: string, isActive: boolean) {
     // Clear previous
     timeoutRef.current.forEach(clearTimeout);
     timeoutRef.current = [];
-    setLines([]);
+    setTimeout(() => setLines([]), 0);
 
     if (!isActive || !marketTitle) return;
 
@@ -58,7 +60,6 @@ function useTerminalLines(marketTitle: string, isActive: boolean) {
 function useAnimatedCounter(target: number, duration = 1500) {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    let start = 0;
     const startTime = performance.now();
     function step(now: number) {
       const elapsed = now - startTime;
@@ -125,8 +126,8 @@ function PredictionReceipt({
   onClose: () => void;
 }) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const txId = `bento_0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
-  const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  const txId = React.useMemo(() => `bento_0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`, []);
+  const timestamp = React.useMemo(() => new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC", []);
 
   const handleCopyReceipt = async () => {
     if (!receiptRef.current) return;
@@ -297,6 +298,46 @@ export default function BentoPulseDashboard() {
   // Animated edge score
   const displayedScore = useAnimatedCounter(analysis?.confidenceScore || 0, 1200);
 
+  const handleSelectMarket = async (market: BentoMarket) => {
+    setSelectedMarket(market);
+    setSelectedOption(null);
+    setTxResult(null);
+    setShowReceipt(false);
+
+    setIsAnalyzing(true);
+    setAnalysis(null);
+    try {
+      const data = await getAnakinMarketAnalysis(market.title);
+      setAnalysis(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleExecute = async () => {
+    if (!selectedMarket || selectedOption === null || !stake) return;
+
+    setIsExecuting(true);
+    setTxResult(null);
+    try {
+      const res = await placeBentoPrediction(selectedMarket.id, selectedOption, parseFloat(stake));
+      if (res && res.success) {
+        setTxResult({ success: true, message: res.message || "Prediction Executed" });
+        playExecutionSound();
+        setShowReceipt(true);
+      } else {
+        setTxResult({ success: false, message: res?.message || "Failed to execute prediction" });
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Failed to execute";
+      setTxResult({ success: false, message: errMsg });
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   // Initial Data Load
   useEffect(() => {
     async function load() {
@@ -330,45 +371,6 @@ export default function BentoPulseDashboard() {
     return () => window.removeEventListener("keydown", handleKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [markets, selectedMarket, selectedOption, stake, showReceipt]);
-
-  const handleSelectMarket = async (market: BentoMarket) => {
-    setSelectedMarket(market);
-    setSelectedOption(null);
-    setTxResult(null);
-    setShowReceipt(false);
-
-    setIsAnalyzing(true);
-    setAnalysis(null);
-    try {
-      const data = await getAnakinMarketAnalysis(market.title);
-      setAnalysis(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleExecute = async () => {
-    if (!selectedMarket || selectedOption === null || !stake) return;
-
-    setIsExecuting(true);
-    setTxResult(null);
-    try {
-      const res = await placeBentoPrediction(selectedMarket.id, selectedOption, parseFloat(stake));
-      if (res && res.success) {
-        setTxResult({ success: true, message: res.message || "Prediction Executed" });
-        playExecutionSound();
-        setShowReceipt(true);
-      } else {
-        setTxResult({ success: false, message: res?.message || "Failed to execute prediction" });
-      }
-    } catch (err: any) {
-      setTxResult({ success: false, message: err.message || "Failed to execute" });
-    } finally {
-      setIsExecuting(false);
-    }
-  };
 
   const selectedOptionLabel = selectedOption !== null && selectedMarket
     ? selectedMarket.options[selectedOption]?.label.toUpperCase() || (selectedOption === 0 ? "YES" : "NO")

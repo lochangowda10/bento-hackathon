@@ -2,7 +2,7 @@
 // No audio files needed — pure synthesis
 export function playExecutionSound() {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     
     // First note — short rising tone
     const osc1 = ctx.createOscillator();

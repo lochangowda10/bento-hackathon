@@ -37,7 +37,7 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
         const answer = data.answer || "";
 
         // Extract news catalysts from real search result titles & snippets
-        const recentNews: AnakinNewsItem[] = results.slice(0, 3).map((res: any) => {
+        const recentNews: AnakinNewsItem[] = results.slice(0, 3).map((res: { title?: string; snippet?: string; url?: string }) => {
           return {
             text: res.title || res.snippet || "Market update detected.",
             url: res.url || "https://bento.fun"
@@ -59,7 +59,7 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
         }
 
         // Perform a simple real-time keyword analysis on the search answer to calculate a genuine confidence score
-        const textToAnalyze = (answer + " " + results.map((r: any) => r.snippet).join(" ")).toLowerCase();
+        const textToAnalyze = (answer + " " + results.map((r: { snippet?: string }) => r.snippet || "").join(" ")).toLowerCase();
         
         // Define sentiment words
         const positiveWords = ["bullish", "yes", "growth", "high", "rise", "approve", "win", "support", "up", "surpass", "flip", "gain", "likely"];
@@ -90,7 +90,7 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
         }
 
         // Create a summary based on the answer or fallback to a custom summary
-        let sentimentSummary = answer 
+        const sentimentSummary = answer 
           ? (answer.length > 150 ? answer.substring(0, 150) + "..." : answer)
           : `Live market analysis of "${marketTitle}" showing balanced trading volume.`;
 
@@ -102,7 +102,7 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
       } else {
         console.error("Anakin API returned non-200 status:", response.status, await response.text());
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Anakin API Error:", error);
     }
   }
