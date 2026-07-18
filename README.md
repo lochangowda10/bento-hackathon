@@ -1,139 +1,85 @@
-<div align="center">
-
 # ⚡ BentoPulse
+> The AI-Powered Prediction Terminal for Bento
 
-**The AI-Powered Prediction Terminal for Bento**
+## Project
 
-[Live Demo](https://bentopulse.vercel.app) · [Built for Build on Bento — BLR Edition](https://bento.fun)
+| Field | Your answer |
+|-------|-------------|
+| **Project name** | BentoPulse |
+| **Tagline** | AI-Powered Prediction Terminal for Bento |
+| **Team name** | Solo Builder |
+| **Team members** | Lochan Gowda |
+| **Contact email** | 10lochangowda@gmail.com |
+| **Track** (if applicable) | - |
 
-<br/>
+### Links
 
-<img src="./docs/screenshot.png" alt="BentoPulse Terminal" width="100%" />
+| | URL |
+|---|-----|
+| **Live demo** | [https://bentopulse.vercel.app/](https://bentopulse.vercel.app/) |
+| **Demo video or slide deck** | [Link to slide deck / video] |
+| **Pitch deck** (optional) | - |
 
+---
+
+## What you built
+
+BentoPulse is a professional Bloomberg-style terminal for Bento prediction markets. It solves a core problem: users typically have to guess when making predictions without data. BentoPulse integrates an AI research agent (Anakin) that scrapes real-time sentiment, news, and activity for any market to provide a curated **AI Edge Score** (0-100) with cited catalysts. Users can view live order details, copy and fund their server-side terminal wallet, and execute predictions directly via the Bento SDK with slippage protection and automated signature authorization.
+
+### Screenshots
+
+<div align="center">
+  <img src="./docs/screenshot.png" alt="BentoPulse Terminal" width="100%" />
 </div>
 
 ---
 
-## The Problem
+## Bento integration
 
-Prediction markets ask you to bet.  
-They never help you **think**.
+| Surface | Yes / No | Describe (if Yes) |
+|---------|----------|-------------------|
+| Markets / duels (browse, bet, create) | **Yes** | Uses `bento.public.listDuels` to display live markets, `bento.user.bets.estimateBuy` to fetch live rates/slippage, and `bento.user.placeBetFromEstimate` to place trades on-chain. |
+| Multi-outcome / parent markets | **No** | |
+| Parlays | **No** | |
+| Tournaments / F1 / fantasy | **No** | |
+| Packs | **No** | |
+| Polymarket bridge | **No** | |
+| Agents | **Yes** | Uses server-side dynamic wallet signing (`eoaLogin`/`eoaRegister`) to execute actions securely on behalf of the user terminal. |
+| Realtime / social | **Yes** | Queries real-time Credits balances using `bento.public.portfolio.getAccountDetails` to let users fund the terminal wallet dynamically. |
+| Others | **No** | |
 
-Every Bento user faces the same moment: a market question, two buttons, and zero intelligence. No data. No sentiment. No conviction signal. Just a guess dressed up as a prediction.
-
-**BentoPulse changes that.**
-
----
-
-## What It Does
-
-```
-SELECT → ANALYZE → DECIDE → EXECUTE → SHARE
-```
-
-1. **Select** a live Bento prediction market from the terminal
-2. **Analyze** — an AI agent (Anakin) scrapes the web for real-time sentiment, news, and activity
-3. **Decide** — receive an **AI Edge Score** (0–100) with cited catalysts, displayed as terminal-style intelligence
-4. **Execute** — place your prediction directly through the Bento SDK with one click
-5. **Share** — receive a beautiful **Prediction Receipt** designed for social sharing
+**Builder API key:** Minted from Bento docs. Keys are stored securely in environment variables and never committed.
 
 ---
 
-## Bento SDK Integration
-
-This is not a mockup. Every prediction routes through the real Bento SDK.
-
-| SDK Module | What We Use It For |
-|---|---|
-| `bento.public.listDuels` | Fetches live testnet duels dynamically to list on the dashboard |
-| `bento.public.portfolio.getAccountDetails` | Queries the live Credit balance of the terminal wallet in real-time |
-| `bento.public.auth.eoaLogin` / `eoaRegister` | Fully automates server-side wallet creation and JWT generation |
-| `bento.user.bets.estimateBuy` | Fetches odds, price calculations, and slippage bounds before execution |
-| `bento.user.placeBetFromEstimate` | Executes on-chain predictions with idempotency key protection |
-
-We pass a cryptographically secure `idempotencyKey` with every execution to prevent double-spends from network retries.
-
----
-
-## Features
-
-- **🧠 AI Edge Score** — Real-time web intelligence via Anakin, rendered as a terminal-style loading sequence
-- **⚡ One-Click Execution** — Live Bento SDK calls with slippage protection
-- **🧾 Prediction Receipt** — Shareable trade confirmation card with confetti celebration
-- **🔊 Execution Sound** — Synthesized confirmation tone via Web Audio API (no files)
-- **⌨️ Keyboard Shortcuts** — `↑↓` navigate, `Y/N` position, `Enter` execute
-- **🖥️ Bloomberg Aesthetic** — Dark terminal UI with live clock, pulse indicators, and scanline overlay
-- **🔒 Secure Architecture** — API keys routed through Next.js Server Actions, never exposed to client
-
----
-
-## Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router, Server Actions) |
-| Prediction Engine | `@bento.fun/sdk` |
-| AI Intelligence | Anakin.io REST API |
-| Language | Strict TypeScript |
-| Styling | Tailwind CSS |
-| Icons | Lucide React |
-| Sound | Web Audio API (synthesized) |
-| Receipt Export | html2canvas |
-
----
-
-## Architecture
-
-```
-src/
-├── app/
-│   ├── page.tsx          # Full terminal dashboard (client component)
-│   ├── layout.tsx        # Root layout with font loading
-│   └── globals.css       # Design system tokens
-└── lib/
-    ├── bento.ts          # Bento SDK — market fetch + prediction execution
-    ├── anakin.ts         # Anakin AI — web research server action
-    ├── sound.ts          # Web Audio API — execution confirmation tone
-    └── utils.ts          # cn() utility for conditional classes
-```
-
----
-
-## Getting Started
+## How to run
 
 ```bash
-# Clone
+# Clone the repository
 git clone https://github.com/lochangowda10/bento-hackathon.git
-cd bento-hackathon
-
-# Install
-npm install
+cd bento-hackathon/submissions/bento-pulse
 
 # Configure environment
 cp .env.example .env.local
-# Add: BUILDER_API_KEY, BENTO_URL, PARLAY_TOURNMENT_URL, ANAKIN_API_KEY
 
-# Run
+# Install dependencies and start development server
+npm install
 npm run dev
 ```
 
----
-
-## Environment Variables
-
-| Variable | Description |
-|---|---|
-| `BUILDER_API_KEY` | Bento builder API key |
-| `BENTO_URL` | Bento server endpoint |
-| `PARLAY_TOURNMENT_URL` | Bento tournaments endpoint |
-| `ANAKIN_API_KEY` | Anakin.io API key for web intelligence |
-| `USER_PRIVATE_KEY` | (Optional) Private key of a funded testnet wallet to override the default EOA bot wallet |
+| Env var | Required | Description |
+|---------|----------|-------------|
+| `BENTO_BUILDER_API_KEY` | yes | Testnet builder key (`x-builder-api-key`) |
+| `BENTO_URL` | yes | Markets host (`https://internal-server.bento.fun`) |
+| `PARLAY_TOURNMENT_URL` | no | Tournaments host (`https://bento-fun-tournaments-backend-3nku.onrender.com`) |
+| `ANAKIN_API_KEY` | yes | Anakin.io API key for web intelligence |
+| `USER_PRIVATE_KEY` | no | (Optional) Private key of a funded testnet wallet to override the default EOA bot wallet |
 
 ---
 
-<div align="center">
-  <br/>
-  <i>"The future of prediction markets isn't better UI. It's better intelligence."</i>
-  <br/><br/>
-  <sub>Built with conviction by <a href="https://github.com/lochangowda10">Lochan Gowda</a></sub>
-</div>
+## Architecture (short)
+
+- **Stack:** Next.js 15 (App Router, Server Actions), Tailwind CSS, Lucide icons, html2canvas, and `@bento.fun/sdk`.
+- **Repo layout:** Next.js application inside `submissions/bento-pulse/`.
+- **Auth:** Uses the Bento SDK's wallet authentication. Signs an login challenge message with the terminal's private key (`viem/accounts`) server-side to obtain a user JWT token, keeping keys safe from client leakage.
+- **What's on-chain vs off-chain:** Market data lookup and prediction placement are executed on-chain via the Bento engine. AI web scraping and news analysis are handled off-chain via the Anakin API.
