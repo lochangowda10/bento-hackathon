@@ -1,8 +1,10 @@
+"use server";
+
 import { createBentoSdk, walletAuthProvider } from '@bento.fun/sdk';
 
 const MOCK_USER_JWT = "mock_jwt_token_for_hackathon";
 
-export const bento = createBentoSdk({
+const bento = createBentoSdk({
   baseUrl: process.env.BENTO_URL || 'https://internal-server.bento.fun',
   apiKey: process.env.BUILDER_API_KEY || 'bnt_live_b7334f13_eb36a9772349da8100452d21',
   tournamentsBaseUrl: process.env.PARLAY_TOURNMENT_URL || 'https://bento-fun-tournaments-backend-3nku.onrender.com',
