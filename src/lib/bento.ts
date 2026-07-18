@@ -3,11 +3,12 @@
 import { createBentoSdk, walletAuthProvider } from '@bento.fun/sdk';
 import crypto from 'crypto';
 
-const MOCK_USER_JWT = process.env.BENTO_USER_JWT || process.env.BUILDER_API_KEY || "mock_jwt_token_for_hackathon";
+const BUILDER_KEY = process.env.BUILDER_API_KEY || process.env.BENTO_BUILDER_API_KEY || 'bnt_live_b7334f13_eb36a9772349da8100452d21';
+const MOCK_USER_JWT = process.env.BENTO_USER_JWT || BUILDER_KEY;
 
 const bento = createBentoSdk({
   baseUrl: process.env.BENTO_URL || 'https://internal-server.bento.fun',
-  apiKey: process.env.BUILDER_API_KEY || 'bnt_live_b7334f13_eb36a9772349da8100452d21',
+  apiKey: BUILDER_KEY,
   tournamentsBaseUrl: process.env.PARLAY_TOURNMENT_URL || 'https://bento-fun-tournaments-backend-3nku.onrender.com',
   auth: walletAuthProvider(() => ({ Authorization: `Bearer ${MOCK_USER_JWT}` })),
 });
@@ -25,7 +26,7 @@ export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
     // Attempting standard catalog fetch on the sdk
     const response = await fetch(`${process.env.BENTO_URL || 'https://internal-server.bento.fun'}/v1/markets`, {
       headers: {
-        'x-builder-api-key': process.env.BUILDER_API_KEY || 'bnt_live_b7334f13_eb36a9772349da8100452d21'
+        'x-builder-api-key': BUILDER_KEY
       }
     });
     if (response.ok) {
