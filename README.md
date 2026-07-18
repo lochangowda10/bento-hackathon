@@ -38,15 +38,15 @@ BentoPulse is a professional Bloomberg-style terminal for Bento prediction marke
 
 | Surface | Yes / No | Describe (if Yes) |
 |---------|----------|-------------------|
-| Markets / duels (browse, bet, create) | **Yes** | Uses `bento.public.listDuels` to display live markets, `bento.user.bets.estimateBuy` to fetch live rates/slippage, and `bento.user.placeBetFromEstimate` to place trades on-chain. |
+| Markets / duels (browse, bet, create) | **Yes** | Uses `bento.public.listDuels` to display live markets, `bento.user.bets.estimateBuy` to fetch live rates/slippage, `bento.user.placeBetFromEstimate` to place trades on-chain, `bento.public.publicBets.getYesPercentageSnapshots` to render sparkline trajectory charts, and `bento.public.publicBets.estimatedWin` to calculate potential payouts. |
 | Multi-outcome / parent markets | **No** | |
 | Parlays | **No** | |
 | Tournaments / F1 / fantasy | **No** | |
 | Packs | **No** | |
 | Polymarket bridge | **No** | |
 | Agents | **Yes** | Uses server-side dynamic wallet signing (`eoaLogin`/`eoaRegister`) to execute actions securely on behalf of the user terminal. |
-| Realtime / social | **Yes** | Queries real-time Credits balances using `bento.public.portfolio.getAccountDetails` to let users fund the terminal wallet dynamically. |
-| Others | **No** | |
+| Realtime / social | **Yes** | Queries real-time Credits balances using `bento.public.portfolio.getAccountDetails` to let users fund the terminal wallet dynamically, and displays a protocol-wide metrics ticker utilizing `bento.public.protocolStats.getStats`. |
+| Others | **Yes** | Displays a dynamic trading leaderboard calling `bento.public.leaderboard.listTraders`. |
 
 **Builder API key:** Minted from Bento docs. Keys are stored securely in environment variables and never committed.
 

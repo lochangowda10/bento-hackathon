@@ -3,7 +3,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import React, { useEffect, useState, useRef } from "react";
-import { fetchLiveMarkets, placeBentoPrediction, getBotWalletDetails, BentoMarket } from "@/lib/bento";
+import {
+  fetchLiveMarkets, placeBentoPrediction, getBotWalletDetails, BentoMarket,
+  fetchOddsHistory, fetchProtocolStats, fetchEstimatedPayout, fetchTopTraders
+} from "@/lib/bento";
 import { getAnakinMarketAnalysis, AnakinAnalysis } from "@/lib/anakin";
 import { playExecutionSound } from "@/lib/sound";
 import {
@@ -293,6 +296,12 @@ export default function BentoPulseDashboard() {
   const [walletDetails, setWalletDetails] = useState<{ address: string; balance: number } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // New Bento SDK integration states
+  const [oddsHistory, setOddsHistory] = useState<{ timestamp: string; yesPercentage: number }[]>([]);
+  const [stats, setStats] = useState<{ totalVolume: string; totalUsers: string; activeMarkets: string; collateralMode: string } | null>(null);
+  const [payout, setPayout] = useState<{ estimatedWin: number; multiplier: string } | null>(null);
+  const [topTraders, setTopTraders] = useState<{ rank: number; address: string; volume: number; pnl: number }[]>([]);
+
   // Receipt
   const [showReceipt, setShowReceipt] = useState(false);
 
@@ -316,12 +325,17 @@ export default function BentoPulseDashboard() {
     setSelectedOption(null);
     setTxResult(null);
     setShowReceipt(false);
+    setPayout(null);
 
     setIsAnalyzing(true);
     setAnalysis(null);
     try {
       const data = await getAnakinMarketAnalysis(market.title);
       setAnalysis(data);
+      
+      // Fetch live SDK odds snapshots
+      const odds = await fetchOddsHistory(market.id);
+      setOddsHistory(odds);
     } catch (err) {
       console.error(err);
     } finally {
@@ -352,6 +366,23 @@ export default function BentoPulseDashboard() {
     }
   };
 
+  // Watch for stake or option changes to query live estimated payout
+  useEffect(() => {
+    async function updatePayout() {
+      if (!selectedMarket || selectedOption === null || !stake || isNaN(parseFloat(stake)) || parseFloat(stake) <= 0) {
+        setPayout(null);
+        return;
+      }
+      try {
+        const est = await fetchEstimatedPayout(selectedMarket.id, selectedOption, parseFloat(stake));
+        setPayout(est);
+      } catch (err) {
+        console.error("Payout estimation error:", err);
+      }
+    }
+    updatePayout();
+  }, [selectedMarket, selectedOption, stake]);
+
   // Initial Data Load
   useEffect(() => {
     async function load() {
@@ -359,6 +390,16 @@ export default function BentoPulseDashboard() {
       setMarkets(data);
       if (data.length > 0) handleSelectMarket(data[0]);
       loadWallet();
+      
+      // Fetch platform stats and traders list
+      try {
+        const pStats = await fetchProtocolStats();
+        setStats(pStats);
+        const traders = await fetchTopTraders();
+        setTopTraders(traders);
+      } catch (e) {
+        console.error("Error loading stats/traders:", e);
+      }
     }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -433,6 +474,43 @@ export default function BentoPulseDashboard() {
         </div>
       </header>
 
+      {/* ═══ BENTO PROTOCOL TICKER TAPE ═══ */}
+      {stats && (
+        <div className="bg-[#101014] border-b border-[#222] py-2 px-6 overflow-hidden select-none">
+          <div className="flex whitespace-nowrap animate-marquee w-[200%] gap-12 text-[10px] font-mono">
+            {/* Loop text twice to create a seamless infinite scrolling effect */}
+            <div className="flex items-center gap-12 shrink-0">
+              <span className="text-[#888] uppercase tracking-wider flex items-center gap-1.5 font-bold">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                BENTO PROTOCOL MONITOR
+              </span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">COLLATERAL MODE: <span className="text-[#ccc]">{stats.collateralMode}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">TOTAL VOLUME: <span className="text-emerald-400 font-bold">{stats.totalVolume}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">TOTAL PROTOCOL TRADERS: <span className="text-blue-400 font-bold">{stats.totalUsers}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">ACTIVE TESTNET MARKETS: <span className="text-purple-400 font-bold">{stats.activeMarkets}</span></span>
+            </div>
+            <div className="flex items-center gap-12 shrink-0">
+              <span className="text-[#888] uppercase tracking-wider flex items-center gap-1.5 font-bold">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                BENTO PROTOCOL MONITOR
+              </span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">COLLATERAL MODE: <span className="text-[#ccc]">{stats.collateralMode}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">TOTAL VOLUME: <span className="text-emerald-400 font-bold">{stats.totalVolume}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">TOTAL PROTOCOL TRADERS: <span className="text-blue-400 font-bold">{stats.totalUsers}</span></span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-500">ACTIVE TESTNET MARKETS: <span className="text-purple-400 font-bold">{stats.activeMarkets}</span></span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ MAIN GRID ═══ */}
       <main className="p-6 h-[calc(100vh-73px)] grid grid-cols-12 gap-6 overflow-hidden">
 
@@ -499,8 +577,34 @@ export default function BentoPulseDashboard() {
             ))}
           </div>
 
+          {/* Top Traders Leaderboard */}
+          {topTraders.length > 0 && (
+            <div className="border-t border-[#222] pt-3 flex flex-col gap-2 shrink-0">
+              <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+                Top Traders Leaderboard
+              </h3>
+              <div className="space-y-1 max-h-[120px] overflow-y-auto custom-scrollbar">
+                {topTraders.map((t) => (
+                  <div key={t.rank} className="flex items-center justify-between bg-[#111] border border-[#1d1d22] px-2.5 py-1 rounded text-[9px] font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-600 font-bold">#{t.rank}</span>
+                      <span className="text-gray-400">{t.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">${t.volume.toLocaleString()}</span>
+                      <span className={t.pnl >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                        {t.pnl >= 0 ? "+" : ""}${t.pnl.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Keyboard hints */}
-          <div className="flex items-center justify-center gap-3 py-2 border-t border-[#1a1a1a]">
+          <div className="flex items-center justify-center gap-3 py-2 border-t border-[#1a1a1a] shrink-0">
             <span className="text-[9px] font-mono text-gray-600 flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-[#15151a] border border-[#333] rounded text-[8px]">↑↓</kbd> Navigate
             </span>
@@ -605,6 +709,64 @@ export default function BentoPulseDashboard() {
                     ))}
                   </div>
                 </div>
+
+                {/* ═══ LIVE ODDS HISTORY CHART ═══ */}
+                {oddsHistory.length > 0 && (
+                  <div className="p-4 rounded-xl bg-[#131318] border border-[#222] flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Live Odds Trajectory (YES%)</h4>
+                      <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                        {oddsHistory[oddsHistory.length - 1]?.yesPercentage}% CURRENT
+                      </span>
+                    </div>
+                    
+                    <div className="h-[75px] w-full relative mt-1">
+                      <svg className="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        {/* Area Path */}
+                        <path
+                          d={`
+                            M 0 100 
+                            ${oddsHistory.map((pt, idx) => {
+                              const x = (idx / (oddsHistory.length - 1)) * 300;
+                              const y = 100 - pt.yesPercentage;
+                              return `L ${x} ${y}`;
+                            }).join(" ")}
+                            L 300 100 Z
+                          `}
+                          fill="url(#chart-glow)"
+                        />
+                        {/* Stroke Path */}
+                        <path
+                          d={oddsHistory.map((pt, idx) => {
+                            const x = (idx / (oddsHistory.length - 1)) * 300;
+                            const y = 100 - pt.yesPercentage;
+                            return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+                          }).join(" ")}
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        {/* Grid lines */}
+                        <line x1="0" y1="50" x2="300" y2="50" stroke="#222" strokeDasharray="3 3" />
+                        <line x1="0" y1="25" x2="300" y2="25" stroke="#222" strokeDasharray="3 3" />
+                        <line x1="0" y1="75" x2="300" y2="75" stroke="#222" strokeDasharray="3 3" />
+                      </svg>
+                    </div>
+                    
+                    <div className="flex justify-between text-[8px] font-mono text-gray-600">
+                      <span>{oddsHistory[0]?.timestamp}</span>
+                      <span>50% BOUND</span>
+                      <span>{oddsHistory[oddsHistory.length - 1]?.timestamp}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
@@ -689,7 +851,7 @@ export default function BentoPulseDashboard() {
                 )}
 
                 {/* Stake */}
-                <div className="space-y-4 mb-auto">
+                <div className="space-y-4 mb-2">
                   <div className="flex justify-between items-end">
                     <span className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">Stake</span>
                   </div>
@@ -704,6 +866,21 @@ export default function BentoPulseDashboard() {
                     />
                   </div>
                 </div>
+
+                {/* Estimated Payout Calculator */}
+                {payout && (
+                  <div className="mb-auto flex items-center justify-between font-mono text-[9px] bg-[#131317] border border-[#222]/80 px-3 py-2 rounded-xl">
+                    <span className="text-gray-500 uppercase tracking-widest">Est. Payout</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-bold text-xs">
+                        ${payout.estimatedWin.toFixed(2)}
+                      </span>
+                      <span className="bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded text-[8px] font-bold">
+                        {payout.multiplier}x
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Error state (only show for errors, success goes to receipt) */}
                 {txResult && !txResult.success && (
