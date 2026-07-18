@@ -74,7 +74,7 @@ export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
     });
     if (response.ok) {
       const data = await response.json();
-      if (data && Array.isArray(data.markets)) {
+      if (data && Array.isArray(data.markets) && data.markets.length > 0) {
          return data.markets.map((m: { id?: string; duelId?: string; title?: string; question?: string; options?: { index: number; label: string }[]; volume?: string; status?: 'LIVE' | 'CLOSED' }) => ({
            id: m.id || m.duelId || '',
            title: m.title || m.question || '',
@@ -88,7 +88,7 @@ export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
     console.warn("Real fetch failed, falling back to mock", error);
   }
 
-  // Graceful fallback for dashboard if live endpoint is unreachable
+  // Graceful fallback for dashboard if live endpoint is unreachable or empty
   return [
     {
       id: "duel-btc-100k",
