@@ -8,8 +8,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 const BUILDER_KEY = process.env.BUILDER_API_KEY || process.env.BENTO_BUILDER_API_KEY || 'bnt_live_b7334f13_eb36a9772349da8100452d21';
 
 // Stable server-side private key for automated demo wallet (exactly 32 bytes / 64 hex chars)
-const MOCK_PRIVATE_KEY = '0xe4e2b02e9cf3e5a09383bd4f4d3f27817950ac7d91113534be1c6eb99b7d398b';
-const account = privateKeyToAccount(MOCK_PRIVATE_KEY);
+const MOCK_PRIVATE_KEY = process.env.USER_PRIVATE_KEY || '0xe4e2b02e9cf3e5a09383bd4f4d3f27817950ac7d91113534be1c6eb99b7d398b';
+const account = privateKeyToAccount(MOCK_PRIVATE_KEY as `0x${string}`);
 
 const bento = createBentoSdk({
   baseUrl: process.env.BENTO_URL || 'https://internal-server.bento.fun',
