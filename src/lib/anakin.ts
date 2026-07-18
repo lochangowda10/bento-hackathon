@@ -1,9 +1,14 @@
 "use server";
 
+export interface AnakinNewsItem {
+  text: string;
+  url: string;
+}
+
 export interface AnakinAnalysis {
   sentimentSummary: string;
   confidenceScore: number;
-  recentNews: string[];
+  recentNews: AnakinNewsItem[];
 }
 
 export async function getAnakinMarketAnalysis(marketTitle: string): Promise<AnakinAnalysis> {
@@ -32,15 +37,24 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
         const answer = data.answer || "";
 
         // Extract news catalysts from real search result titles & snippets
-        const recentNews = results.slice(0, 3).map((res: any) => {
-          return res.title || res.snippet || "Market update detected.";
+        const recentNews: AnakinNewsItem[] = results.slice(0, 3).map((res: any) => {
+          return {
+            text: res.title || res.snippet || "Market update detected.",
+            url: res.url || "https://bento.fun"
+          };
         });
 
         // If no news, use dynamic query-based headlines
         if (recentNews.length === 0) {
           recentNews.push(
-            `Web intelligence search completed for: "${marketTitle}"`,
-            "Awaiting further social and volume confirmation index signals."
+            {
+              text: `Web intelligence search completed for: "${marketTitle}"`,
+              url: "https://bento.fun"
+            },
+            {
+              text: "Awaiting further social and volume confirmation index signals.",
+              url: "https://bento.fun"
+            }
           );
         }
 
@@ -103,23 +117,23 @@ export async function getAnakinMarketAnalysis(marketTitle: string): Promise<Anak
   let sentimentSummary = `Neutral market conditions with balanced trading volume for: "${marketTitle}".`;
   let confidenceScore = 55;
   let recentNews = [
-    `Volume metrics indicating stability for "${marketTitle}".`,
-    "Social index signals consolidated positioning by larger holders."
+    { text: `Volume metrics indicating stability for "${marketTitle}".`, url: "https://bento.fun" },
+    { text: "Social index signals consolidated positioning by larger holders.", url: "https://bento.fun" }
   ];
 
   if (isPositive) {
     sentimentSummary = `Bullish momentum detected for "${marketTitle}". Social sentiment is highly positive.`;
     confidenceScore = 82;
     recentNews = [
-      `Increasing momentum on derivatives matches prediction direction.`,
-      `Traders reporting elevated high-conviction spot purchases.`
+      { text: `Increasing momentum on derivatives matches prediction direction.`, url: "https://bento.fun" },
+      { text: `Traders reporting elevated high-conviction spot purchases.`, url: "https://bento.fun" }
     ];
   } else if (isNegative) {
     sentimentSummary = `Bearish outlook. Technical resistance and negative social sentiment on "${marketTitle}".`;
     confidenceScore = 71;
     recentNews = [
-      `Spot flows indicate selling pressure.`,
-      `Volume declines under key moving averages.`
+      { text: `Spot flows indicate selling pressure.`, url: "https://bento.fun" },
+      { text: `Volume declines under key moving averages.`, url: "https://bento.fun" }
     ];
   }
 

@@ -570,14 +570,17 @@ export default function BentoPulseDashboard() {
                   <h4 className="text-xs font-mono text-gray-500 mb-3 uppercase tracking-widest">Real-time Catalysts</h4>
                   <div className="space-y-3">
                     {analysis.recentNews.map((news, i) => (
-                      <div
+                      <a
                         key={i}
-                        className="flex gap-3 p-3 rounded-lg bg-[#111] border border-[#1a1a1a] hover:border-[#333] transition-all hover:-translate-y-0.5"
+                        href={news.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex gap-3 p-3 rounded-lg bg-[#111] border border-[#1a1a1a] hover:border-blue-500/50 hover:bg-[#131318] transition-all hover:-translate-y-0.5 group/link"
                         style={{ animationDelay: `${i * 100}ms` }}
                       >
-                        <ChevronRight className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                        <p className="text-sm text-gray-300">{news}</p>
-                      </div>
+                        <ChevronRight className="w-4 h-4 text-blue-500 mt-0.5 shrink-0 group-hover/link:translate-x-0.5 transition-transform" />
+                        <p className="text-sm text-gray-300 group-hover/link:text-blue-400 transition-colors">{news.text}</p>
+                      </a>
                     ))}
                   </div>
                 </div>
