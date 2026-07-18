@@ -356,9 +356,13 @@ export default function BentoPulseDashboard() {
     setTxResult(null);
     try {
       const res = await placeBentoPrediction(selectedMarket.id, selectedOption, parseFloat(stake));
-      setTxResult({ success: true, message: res?.message || "Prediction Executed" });
-      playExecutionSound();
-      setShowReceipt(true);
+      if (res && res.success) {
+        setTxResult({ success: true, message: res.message || "Prediction Executed" });
+        playExecutionSound();
+        setShowReceipt(true);
+      } else {
+        setTxResult({ success: false, message: res?.message || "Failed to execute prediction" });
+      }
     } catch (err: any) {
       setTxResult({ success: false, message: err.message || "Failed to execute" });
     } finally {

@@ -1,6 +1,7 @@
 "use server";
 
 import { createBentoSdk, walletAuthProvider } from '@bento.fun/sdk';
+import crypto from 'crypto';
 
 const MOCK_USER_JWT = "mock_jwt_token_for_hackathon";
 
@@ -86,13 +87,14 @@ export async function placeBentoPrediction(duelId: string, optionIndex: number, 
     });
   } catch (e: any) {
     console.error("SDK Estimate Error:", e);
-    // Since we don't have a real JWT and we're mocking auth, the real SDK *will* throw a 401 Unauthorized here.
-    // In a hackathon presentation where "Auth is assumed to be wired", we throw gracefully to the UI.
-    throw new Error(e.message || "Authentication failed during estimate");
+    return { 
+      success: false, 
+      message: `Bento Engine Estimate Error: ${e.message || "Unauthorized (Invalid User JWT)"}` 
+    };
   }
 
   if (!est.success) {
-    throw new Error('Estimate rejected by Bento engine');
+    return { success: false, message: 'Estimate rejected by Bento engine' };
   }
 
   console.log(`[BentoPulse] Estimate success, placing bet...`);
@@ -117,6 +119,9 @@ export async function placeBentoPrediction(duelId: string, optionIndex: number, 
     return { success: true, message: "Prediction executed successfully." };
   } catch (e: any) {
     console.error("SDK Place Error:", e);
-    throw new Error(e.message || "Failed to place prediction on-chain");
+    return { 
+      success: false, 
+      message: `Bento Engine Placement Error: ${e.message || "Failed to place prediction on-chain"}` 
+    };
   }
 }
