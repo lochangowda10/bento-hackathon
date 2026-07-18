@@ -81,16 +81,16 @@ export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
       console.log(`[BentoPulse] Successfully mapped ${rawMarkets.length} live testnet markets.`);
       return rawMarkets.map((m: any) => {
         const options = Array.isArray(m.options) ? m.options.map((o: any, idx: number) => ({
-          index: typeof o.index === 'number' ? o.index : idx,
-          label: o.label || (idx === 0 ? 'YES' : 'NO')
+          index: idx,
+          label: String(o)
         })) : [{index: 0, label: 'YES'}, {index: 1, label: 'NO'}];
 
         return {
           id: m.duelId || m.id || '',
-          title: m.question || m.title || '',
+          title: m.betString || m.question || m.title || '',
           options,
-          volume: m.volumeUsdc ? Number(m.volumeUsdc).toLocaleString() : '0',
-          status: m.status || 'LIVE'
+          volume: m.totalBetAmountUsdc !== undefined ? Number(m.totalBetAmountUsdc).toLocaleString() : '0',
+          status: m.status === -1 ? 'LIVE' : 'CLOSED'
         };
       });
     }
