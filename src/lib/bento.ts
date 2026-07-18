@@ -193,3 +193,29 @@ export async function placeBentoPrediction(duelId: string, optionIndex: number, 
     };
   }
 }
+
+export async function getBotWalletDetails() {
+  try {
+    const details = await bento.public.portfolio.getAccountDetails({
+      userAddress: account.address,
+      collateralStack: 'credits'
+    });
+    
+    // Parse defensively
+    const balance = details.credits !== undefined ? Number(details.credits) :
+                    details.balance !== undefined ? Number(details.balance) :
+                    details.availableBalance !== undefined ? Number(details.availableBalance) :
+                    0;
+
+    return {
+      address: account.address,
+      balance: balance
+    };
+  } catch (error) {
+    console.error("Failed to fetch bot wallet details:", error);
+    return {
+      address: account.address,
+      balance: 0
+    };
+  }
+}

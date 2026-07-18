@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import React, { useEffect, useState, useRef } from "react";
-import { fetchLiveMarkets, placeBentoPrediction, BentoMarket } from "@/lib/bento";
+import { fetchLiveMarkets, placeBentoPrediction, getBotWalletDetails, BentoMarket } from "@/lib/bento";
 import { getAnakinMarketAnalysis, AnakinAnalysis } from "@/lib/anakin";
 import { playExecutionSound } from "@/lib/sound";
 import {
@@ -289,6 +289,10 @@ export default function BentoPulseDashboard() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [txResult, setTxResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Bot wallet details
+  const [walletDetails, setWalletDetails] = useState<{ address: string; balance: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+
   // Receipt
   const [showReceipt, setShowReceipt] = useState(false);
 
@@ -297,6 +301,15 @@ export default function BentoPulseDashboard() {
 
   // Animated edge score
   const displayedScore = useAnimatedCounter(analysis?.confidenceScore || 0, 1200);
+
+  const loadWallet = async () => {
+    try {
+      const details = await getBotWalletDetails();
+      setWalletDetails(details);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleSelectMarket = async (market: BentoMarket) => {
     setSelectedMarket(market);
@@ -327,6 +340,7 @@ export default function BentoPulseDashboard() {
         setTxResult({ success: true, message: res.message || "Prediction Executed" });
         playExecutionSound();
         setShowReceipt(true);
+        loadWallet(); // Reload wallet balance after a successful prediction
       } else {
         setTxResult({ success: false, message: res?.message || "Failed to execute prediction" });
       }
@@ -344,6 +358,7 @@ export default function BentoPulseDashboard() {
       const data = await fetchLiveMarkets();
       setMarkets(data);
       if (data.length > 0) handleSelectMarket(data[0]);
+      loadWallet();
     }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -640,11 +655,43 @@ export default function BentoPulseDashboard() {
                   </div>
                 </div>
 
+                {/* Wallet / Balance */}
+                {walletDetails && (
+                  <div className="p-3 bg-[#131317] border border-[#222] rounded-xl flex flex-col gap-2 font-mono text-[10px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 uppercase tracking-widest">Terminal Wallet</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(walletDetails.address);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        {copied ? "COPIED!" : "COPY ADDRESS"}
+                      </button>
+                    </div>
+                    <div className="text-gray-300 select-all truncate text-xs break-all bg-[#0a0a0c] p-2 rounded border border-[#1a1a20]">
+                      {walletDetails.address}
+                    </div>
+                    <div className="flex items-center justify-between mt-1 text-xs border-t border-[#1e1e24] pt-2">
+                      <span className="text-gray-500 uppercase tracking-widest text-[9px]">Wallet Balance</span>
+                      <span className="font-bold text-white tracking-wide">
+                        {walletDetails.balance.toLocaleString()} Credits
+                      </span>
+                    </div>
+                    {walletDetails.balance === 0 && (
+                      <div className="text-[9px] text-amber-500/80 leading-normal mt-1 border-t border-[#1e1e24] pt-1">
+                        ⚠️ Zero balance. Fund this address with Credits from the Bento testnet app to place real bets.
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Stake */}
                 <div className="space-y-4 mb-auto">
                   <div className="flex justify-between items-end">
                     <span className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">Stake</span>
-                    <span className="text-[10px] font-mono text-gray-600">Free Play Credits: 1,000</span>
                   </div>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
