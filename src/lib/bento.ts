@@ -66,26 +66,37 @@ export interface BentoMarket {
 
 export async function fetchLiveMarkets(): Promise<BentoMarket[]> {
   try {
-    // Attempting standard catalog fetch on the sdk
-    const response = await fetch(`${process.env.BENTO_URL || 'https://internal-server.bento.fun'}/v1/markets`, {
-      headers: {
-        'x-builder-api-key': BUILDER_KEY
-      }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data && Array.isArray(data.markets) && data.markets.length > 0) {
-         return data.markets.map((m: { id?: string; duelId?: string; title?: string; question?: string; options?: { index: number; label: string }[]; volume?: string; status?: 'LIVE' | 'CLOSED' }) => ({
-           id: m.id || m.duelId || '',
-           title: m.title || m.question || '',
-           options: m.options || [{index: 0, label: 'YES'}, {index: 1, label: 'NO'}],
-           volume: m.volume || '0',
-           status: m.status || 'LIVE'
-         }));
-      }
+    console.log("[BentoPulse] Fetching live testnet markets from Bento SDK...");
+    const response = await bento.public.listDuels({ page: 1, limit: 10 });
+    console.log("[BentoPulse] SDK Response received. Parsing...");
+    
+    // Parse defensively to support various API response shapes
+    const rawMarkets: any[] = Array.isArray(response) ? response : 
+                             (response && Array.isArray((response as any).data)) ? (response as any).data :
+                             (response && Array.isArray((response as any).results)) ? (response as any).results :
+                             (response && Array.isArray((response as any).markets)) ? (response as any).markets : 
+                             [];
+
+    if (rawMarkets.length > 0) {
+      console.log(`[BentoPulse] Successfully mapped ${rawMarkets.length} live testnet markets.`);
+      return rawMarkets.map((m: any) => {
+        const options = Array.isArray(m.options) ? m.options.map((o: any, idx: number) => ({
+          index: typeof o.index === 'number' ? o.index : idx,
+          label: o.label || (idx === 0 ? 'YES' : 'NO')
+        })) : [{index: 0, label: 'YES'}, {index: 1, label: 'NO'}];
+
+        return {
+          id: m.duelId || m.id || '',
+          title: m.question || m.title || '',
+          options,
+          volume: m.volumeUsdc ? Number(m.volumeUsdc).toLocaleString() : '0',
+          status: m.status || 'LIVE'
+        };
+      });
     }
+    console.log("[BentoPulse] SDK returned 0 markets, falling back to mocks...");
   } catch (error) {
-    console.warn("Real fetch failed, falling back to mock", error);
+    console.warn("[BentoPulse] Real SDK listDuels failed, falling back to mock:", error);
   }
 
   // Graceful fallback for dashboard if live endpoint is unreachable or empty
