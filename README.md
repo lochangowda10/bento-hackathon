@@ -45,9 +45,11 @@ This is not a mockup. Every prediction routes through the real Bento SDK.
 
 | SDK Module | What We Use It For |
 |---|---|
-| `sdk.user.bets.estimateBuy` | Fetches live slippage bounds before execution |
-| `sdk.user.placeBetFromEstimate` | Executes the prediction with idempotency protection |
-| Market Catalog API | Fetches live markets for the terminal sidebar |
+| `bento.public.listDuels` | Fetches live testnet duels dynamically to list on the dashboard |
+| `bento.public.portfolio.getAccountDetails` | Queries the live Credit balance of the terminal wallet in real-time |
+| `bento.public.auth.eoaLogin` / `eoaRegister` | Fully automates server-side wallet creation and JWT generation |
+| `bento.user.bets.estimateBuy` | Fetches odds, price calculations, and slippage bounds before execution |
+| `bento.user.placeBetFromEstimate` | Executes on-chain predictions with idempotency key protection |
 
 We pass a cryptographically secure `idempotencyKey` with every execution to prevent double-spends from network retries.
 
@@ -125,6 +127,7 @@ npm run dev
 | `BENTO_URL` | Bento server endpoint |
 | `PARLAY_TOURNMENT_URL` | Bento tournaments endpoint |
 | `ANAKIN_API_KEY` | Anakin.io API key for web intelligence |
+| `USER_PRIVATE_KEY` | (Optional) Private key of a funded testnet wallet to override the default EOA bot wallet |
 
 ---
 
