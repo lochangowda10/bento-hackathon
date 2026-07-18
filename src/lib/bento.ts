@@ -3,7 +3,7 @@
 import { createBentoSdk, walletAuthProvider } from '@bento.fun/sdk';
 import crypto from 'crypto';
 
-const MOCK_USER_JWT = "mock_jwt_token_for_hackathon";
+const MOCK_USER_JWT = process.env.BENTO_USER_JWT || "mock_jwt_token_for_hackathon";
 
 const bento = createBentoSdk({
   baseUrl: process.env.BENTO_URL || 'https://internal-server.bento.fun',
